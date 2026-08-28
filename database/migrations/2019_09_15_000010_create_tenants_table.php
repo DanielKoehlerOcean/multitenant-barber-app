@@ -19,6 +19,7 @@ class CreateTenantsTable extends Migration
             $table->uuid('id')->primary();
 
             $table->string('name'); // Nome da barbearia
+            $table->string('slug');
             $table->string('email')->unique(); // Email do dono/admin
             $table->string('document')->nullable()->unique(); // CNPJ ou CPF
             $table->string('plan')->default('free'); 

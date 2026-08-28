@@ -14,6 +14,7 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { tenants } from '@/routes/central';
 import type { NavItem } from '@/types';
 
 const mainNavItems: NavItem[] = [
@@ -24,7 +25,7 @@ const mainNavItems: NavItem[] = [
     },
     {
         title: 'Barbearias',
-        href: '#',
+        href: '/tenants',
         icon: Scissors,
     },
 ];
