@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -26,6 +27,11 @@ Route::middleware([
 
     Route::middleware(['auth', 'verified'])->group(function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
+
+        Route::resource('services', ServiceController::class);
+
+        Route::get('/services/{service}/photo', [ServiceController::class, 'photo'])->name('services.photo');
+        
     });
 
 });

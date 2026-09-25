@@ -41,7 +41,14 @@ class HandleInertiaRequests extends Middleware
             'auth' => [
                 'user' => $request->user(),
             ],
+            'tenant' => tenant() ? [
+                'id' => tenant('id'),
+            ]: null,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
+            'flash' => [
+                // Usa uma função closure (fn) para buscar a mensagem apenas quando ela existir
+                'message' => fn () => $request->session()->get('message')
+            ],
         ];
     }
 }

@@ -32,7 +32,5 @@ class CentralDomainRole
 
         abort(403);
      
-        
-
     }
 }

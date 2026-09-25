@@ -27,7 +27,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  */
-#[Fillable(['name', 'email', 'password'])]
+#[Fillable(['name', 'email', 'password', 'role'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable implements PasskeyUser
 {
@@ -46,5 +46,28 @@ class User extends Authenticatable implements PasskeyUser
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
         ];
+    }
+
+    public function getRole(): string
+    {
+        return $this->role ?? '';
+    }
+
+    public function hasAdmin(string $role){
+        return $role === $this->getRole();
+    }
+
+    public function tenants()
+    {
+        // Uma forma de listar todas as barbearias em que o barbeiro ou dono atua
+        return $this->belongsToMany(Tenant::class)
+                    ->withPivot('role')
+                    ->withTimestamps();
+    }
+
+    public function schedules()
+    {
+        // Agendamentos em que este usuário é o barbeiro responsável
+        return $this->hasMany(Schedule::class);
     }
 }

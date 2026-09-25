@@ -6,6 +6,8 @@ use Stancl\Tenancy\Database\Concerns\HasDomains;
 use Stancl\Tenancy\Database\Concerns\HasDatabase;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Stancl\Tenancy\Database\Models\Tenant as BaseTenant;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tenant extends BaseTenant
 {
@@ -16,10 +18,20 @@ class Tenant extends BaseTenant
         return [
             'id',
             'name',
+            'slug',
             'email',
             'document',
             'plan',
             'is_active',
         ];
     }
+
+    public function users()
+    {
+        // Relação de quais usuários têm acesso a esta barbearia e qual a permissão deles
+        return $this->belongsToMany(User::class)
+                    ->withPivot('role')
+                    ->withTimestamps();
+    }
+
 }
