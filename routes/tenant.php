@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ServiceController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -29,8 +30,15 @@ Route::middleware([
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
 
         Route::resource('services', ServiceController::class);
-
         Route::get('/services/{service}/photo', [ServiceController::class, 'photo'])->name('services.photo');
+        
+        Route::resource('schedules', ScheduleController::class);
+
+        // routes/tenant.php
+
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::resource('/operation', SettingsController::class);
+        });
         
     });
 

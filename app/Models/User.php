@@ -13,6 +13,7 @@ use Illuminate\Support\Carbon;
 use Laravel\Fortify\Contracts\PasskeyUser;
 use Laravel\Fortify\PasskeyAuthenticatable;
 use Laravel\Fortify\TwoFactorAuthenticatable;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
  * @property int $id
@@ -69,5 +70,10 @@ class User extends Authenticatable implements PasskeyUser
     {
         // Agendamentos em que este usuário é o barbeiro responsável
         return $this->hasMany(Schedule::class);
+    }
+
+        public function workingHours(): HasMany
+    {
+        return $this->hasMany(BarberWorkingHour::class);
     }
 }
