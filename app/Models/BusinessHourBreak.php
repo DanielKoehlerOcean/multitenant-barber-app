@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BusinessHourBreak extends Model
 {
+
     protected $fillable = [
         'business_hour_id',
         'start_time',

@@ -5,9 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
 class BusinessHour extends Model
 {
+    
+    use BelongsToTenant;
+
     protected $fillable = [
         'tenant_id',
         'day_of_week',

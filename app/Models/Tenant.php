@@ -29,7 +29,7 @@ class Tenant extends BaseTenant
     public function users()
     {
         // Relação de quais usuários têm acesso a esta barbearia e qual a permissão deles
-        return $this->belongsToMany(User::class)
+        return $this->belongsToMany(User::class, 'tenant_users')
                     ->withPivot('role')
                     ->withTimestamps();
     }

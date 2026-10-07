@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ServiceController;
+use App\Http\Controllers\OperationController;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
@@ -33,12 +34,12 @@ Route::middleware([
         Route::get('/services/{service}/photo', [ServiceController::class, 'photo'])->name('services.photo');
         
         Route::resource('schedules', ScheduleController::class);
+        Route::get('/schedules/availability', [ScheduleController::class, 'availability'])->name('schedules.availability');
 
-        // routes/tenant.php
+        Route::get('/operation', [OperationController::class, 'index'])->name('operation');
+        Route::put('/operation/business-hour', [OperationController::class, 'updateBusinessHours'])->name('update.business-hour');
+        Route::put('/operation/barber-hour/{user}', [OperationController::class, 'updateBarberHours'])->name('update.barber-hour');
 
-        Route::prefix('settings')->name('settings.')->group(function () {
-            Route::resource('/operation', SettingsController::class);
-        });
         
     });
 

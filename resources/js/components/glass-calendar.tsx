@@ -8,12 +8,14 @@ import {
 } from 'lucide-react';
 import {
     addMonths,
+    eachDayOfInterval,
+    endOfMonth,
     format,
-    getDate,
-    getDaysInMonth,
     isSameDay,
     isToday,
     startOfMonth,
+    startOfWeek,
+    endOfWeek,
     subMonths,
 } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -68,40 +70,41 @@ export const GlassCalendar = React.forwardRef<
         const [selectedDate, setSelectedDate] =
             React.useState<Date>(initialDate);
 
-        /*
-         * Mantém o calendário sincronizado caso o componente pai
-         * altere a data selecionada.
-         */
         React.useEffect(() => {
             if (!propSelectedDate) {
                 return;
             }
 
             setSelectedDate(propSelectedDate);
-            setCurrentMonth(propSelectedDate);
+
+            // Só muda o mês se a data selecionada estiver
+            // em um mês diferente do atual.
+            if (
+                propSelectedDate.getMonth() !== currentMonth.getMonth() ||
+                propSelectedDate.getFullYear() !==
+                    currentMonth.getFullYear()
+            ) {
+                setCurrentMonth(propSelectedDate);
+            }
         }, [propSelectedDate]);
 
-        const monthDays = React.useMemo(() => {
-            const start = startOfMonth(currentMonth);
-            const totalDays = getDaysInMonth(currentMonth);
+        const monthDays = React.useMemo<Day[]>(() => {
+            const start = startOfWeek(startOfMonth(currentMonth), {
+                weekStartsOn: 0,
+            });
 
-            const days: Day[] = [];
+            const end = endOfWeek(endOfMonth(currentMonth), {
+                weekStartsOn: 0,
+            });
 
-            for (let i = 0; i < totalDays; i++) {
-                const date = new Date(
-                    start.getFullYear(),
-                    start.getMonth(),
-                    i + 1,
-                );
-
-                days.push({
-                    date,
-                    isToday: isToday(date),
-                    isSelected: isSameDay(date, selectedDate),
-                });
-            }
-
-            return days;
+            return eachDayOfInterval({
+                start,
+                end,
+            }).map((date) => ({
+                date,
+                isToday: isToday(date),
+                isSelected: isSameDay(date, selectedDate),
+            }));
         }, [currentMonth, selectedDate]);
 
         const handleDateClick = (date: Date) => {
@@ -175,7 +178,7 @@ export const GlassCalendar = React.forwardRef<
                         transition={{
                             duration: 0.3,
                         }}
-                        className="text-4xl font-bold tracking-tight"
+                        className="text-4xl font-bold tracking-tight capitalize"
                     >
                         {format(currentMonth, 'MMMM', {
                             locale: ptBR,
@@ -203,44 +206,74 @@ export const GlassCalendar = React.forwardRef<
                     </div>
                 </div>
 
-                {/* Dias */}
-                <div className="-mx-5 overflow-x-auto px-5 scrollbar-hide">
-                    <div className="flex space-x-4">
-                        {monthDays.map((day) => (
+                {/* Calendário */}
+                <div className="px-1">
+                    {/* Dias da semana */}
+                    <div className="mb-3 grid grid-cols-7">
+                        {[
+                            'Dom',
+                            'Seg',
+                            'Ter',
+                            'Qua',
+                            'Qui',
+                            'Sex',
+                            'Sáb',
+                        ].map((day) => (
                             <div
-                                key={format(
-                                    day.date,
-                                    'yyyy-MM-dd',
-                                )}
-                                className="flex shrink-0 flex-col items-center space-y-2"
+                                key={day}
+                                className="text-center text-[10px] font-bold tracking-wide text-white/40 uppercase"
                             >
-                                <span className="text-xs font-bold uppercase text-white/50">
-                                    {format(day.date, 'EEEE', {
-                                        locale: ptBR,
-                                    }).charAt(0)}
-                                </span>
-
-                                <button
-                                    type="button"
-                                    onClick={() =>
-                                        handleDateClick(day.date)
-                                    }
-                                    className={cn(
-                                        'relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-all duration-200',
-                                        day.isSelected
-                                            ? 'bg-primary text-white'
-                                            : 'text-white hover:bg-white/20',
-                                    )}
-                                >
-                                    {day.isToday &&
-                                        !day.isSelected && (
-                                            <span className="absolute bottom-1 h-1 w-1 rounded-full bg-pink-400" />
-                                        )}
-
-                                    {getDate(day.date)}
-                                </button>
+                                {day}
                             </div>
                         ))}
+                    </div>
+
+                    {/* Dias */}
+                    <div className="grid grid-cols-7 gap-y-3">
+                        {monthDays.map((day) => {
+                            const isCurrentMonth =
+                                day.date.getMonth() ===
+                                    currentMonth.getMonth() &&
+                                day.date.getFullYear() ===
+                                    currentMonth.getFullYear();
+
+                            return (
+                                <div
+                                    key={format(
+                                        day.date,
+                                        'yyyy-MM-dd',
+                                    )}
+                                    className="flex justify-center"
+                                >
+                                    <button
+                                        type="button"
+                                        onClick={() =>
+                                            handleDateClick(
+                                                day.date,
+                                            )
+                                        }
+                                        className={cn(
+                                            'relative flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-all duration-200',
+                                            day.isSelected
+                                                ? 'bg-primary text-white shadow-md'
+                                                : isCurrentMonth
+                                                  ? 'text-white hover:bg-white/20'
+                                                  : 'text-white/25 hover:bg-white/10',
+                                        )}
+                                    >
+                                        {day.isToday &&
+                                            !day.isSelected && (
+                                                <span className="absolute bottom-0.5 h-1 w-1 rounded-full bg-pink-400" />
+                                            )}
+
+                                        {format(
+                                            day.date,
+                                            'd',
+                                        )}
+                                    </button>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 

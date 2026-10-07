@@ -14,7 +14,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-
+import { useEffect } from 'react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
@@ -48,6 +48,9 @@ export default function Create({ clients, barbers, services }: Props) {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(
         new Date(),
     );
+
+    const [availableTimes, setAvailableTimes] = useState<string[]>([]);
+    const [loadingTimes, setLoadingTimes] = useState(false);
 
     const [selectedClient, setSelectedClient] = useState<number | null>(null);
     const [selectedBarber, setSelectedBarber] = useState<number | null>(null);
@@ -140,21 +143,64 @@ export default function Create({ clients, barbers, services }: Props) {
         );
     };
 
-    const availableTimes = [
-        '08:00',
-        '08:45',
-        '09:30',
-        '10:15',
-        '11:00',
-        '13:00',
-        '13:45',
-        '14:30',
-        '15:15',
-        '16:00',
-        '16:45',
-        '17:30',
-        '18:15',
-    ];
+    useEffect(() => {
+        if (
+            !selectedDate ||
+            !selectedBarber ||
+            totalDuration <= 0
+        ) {
+            setAvailableTimes([]);
+            setSelectedTime(null);
+
+            return;
+        }
+
+        const loadAvailableTimes = async () => {
+            setLoadingTimes(true);
+            setSelectedTime(null);
+
+            try {
+                const date = selectedDate.toISOString().split('T')[0];
+
+                const params = new URLSearchParams({
+                    date,
+                    barber_id: String(selectedBarber),
+                    duration: String(totalDuration),
+                });
+
+                const response = await fetch(
+                    `/schedules/availability?${params.toString()}`,
+                    {
+                        headers: {
+                            Accept: 'application/json',
+                        },
+                    },
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        'Não foi possível carregar os horários.',
+                    );
+                }
+
+                const data = await response.json();
+
+                setAvailableTimes(data.times ?? []);
+            } catch (error) {
+                console.error(error);
+
+                setAvailableTimes([]);
+            } finally {
+                setLoadingTimes(false);
+            }
+        };
+
+        loadAvailableTimes();
+    }, [
+        selectedDate,
+        selectedBarber,
+        totalDuration,
+    ]);
 
     const submit = () => {
         // Posteriormente ligaremos ao backend:
@@ -426,28 +472,45 @@ export default function Create({ clients, barbers, services }: Props) {
                                         </div>
                                     </CardHeader>
 
-                                    <CardContent className="grid grid-cols-3 gap-2 px-5 pb-5 sm:grid-cols-4 sm:px-6">
-                                        {availableTimes.map((time) => {
-                                            const selected =
-                                                selectedTime === time;
+                                   <CardContent className="px-5 pb-5 sm:px-6">
+                                        {loadingTimes ? (
+                                            <div className="py-8 text-center text-sm text-muted-foreground">
+                                                Calculando horários disponíveis...
+                                            </div>
+                                        ) : !selectedBarber ? (
+                                            <div className="py-8 text-center text-sm text-muted-foreground">
+                                                Selecione um barbeiro para visualizar os horários.
+                                            </div>
+                                        ) : totalDuration <= 0 ? (
+                                            <div className="py-8 text-center text-sm text-muted-foreground">
+                                                Selecione pelo menos um serviço para visualizar os horários.
+                                            </div>
+                                        ) : availableTimes.length === 0 ? (
+                                            <div className="py-8 text-center text-sm text-muted-foreground">
+                                                Nenhum horário disponível para esta data.
+                                            </div>
+                                        ) : (
+                                            <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
+                                                {availableTimes.map((time) => {
+                                                    const selected = selectedTime === time;
 
-                                            return (
-                                                <button
-                                                    key={time}
-                                                    type="button"
-                                                    onClick={() =>
-                                                        setSelectedTime(time)
-                                                    }
-                                                    className={`h-10 rounded-xl border text-sm font-medium transition-all ${
-                                                        selected
-                                                            ? 'border-primary bg-primary text-primary-foreground shadow-sm'
-                                                            : 'border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5'
-                                                    }`}
-                                                >
-                                                    {time}
-                                                </button>
-                                            );
-                                        })}
+                                                    return (
+                                                        <button
+                                                            key={time}
+                                                            type="button"
+                                                            onClick={() => setSelectedTime(time)}
+                                                            className={`h-10 rounded-xl border text-sm font-medium transition-all ${
+                                                                selected
+                                                                    ? 'border-primary bg-primary text-primary-foreground shadow-sm'
+                                                                    : 'border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5'
+                                                            }`}
+                                                        >
+                                                            {time}
+                                                        </button>
+                                                    );
+                                                })}
+                                            </div>
+                                        )}
                                     </CardContent>
                                 </Card>
 
