@@ -49,10 +49,6 @@ class ScheduleController extends Controller
 
         $dayOfWeek = $date->dayOfWeek;
 
-        /*
-        * Primeiro procuramos uma configuração específica
-        * para este barbeiro neste dia.
-        */
         $barberHour = BarberWorkingHour::query()
             ->where('tenant_id', tenant('id'))
             ->where('user_id', $barber->id)
@@ -60,10 +56,6 @@ class ScheduleController extends Controller
             ->with('breaks')
             ->first();
 
-        /*
-        * Se existe configuração individual,
-        * ela tem prioridade sobre a configuração geral.
-        */
         if ($barberHour) {
             if (! $barberHour->is_working) {
                 return response()->json([
@@ -75,10 +67,7 @@ class ScheduleController extends Controller
             $endTime = $barberHour->end_time;
             $breaks = $barberHour->breaks;
         } else {
-            /*
-            * Sem configuração individual:
-            * utiliza o horário geral da barbearia.
-            */
+            
             $businessHour = BusinessHour::query()
                 ->where('tenant_id', tenant('id'))
                 ->where('day_of_week', $dayOfWeek)
@@ -120,7 +109,7 @@ class ScheduleController extends Controller
         for (
             $slot = $start->copy();
             $slot->copy()->addMinutes($duration)->lte($end);
-            $slot->addMinutes(15)
+            $slot->addMinutes(30)
         ) {
             $slotEnd = $slot->copy()->addMinutes($duration);
 

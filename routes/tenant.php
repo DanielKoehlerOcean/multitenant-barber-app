@@ -33,7 +33,7 @@ Route::middleware([
         Route::resource('services', ServiceController::class);
         Route::get('/services/{service}/photo', [ServiceController::class, 'photo'])->name('services.photo');
         
-        Route::resource('schedules', ScheduleController::class);
+        Route::get('/schedules', [ScheduleController::class, 'index']);
         Route::get('/schedules/availability', [ScheduleController::class, 'availability'])->name('schedules.availability');
 
         Route::get('/operation', [OperationController::class, 'index'])->name('operation');

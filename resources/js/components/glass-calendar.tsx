@@ -137,31 +137,7 @@ export const GlassCalendar = React.forwardRef<
             >
                 <ScrollbarHide />
 
-                {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1 rounded-lg bg-black/20 p-1">
-                        <button
-                            type="button"
-                            className="rounded-md bg-white px-4 py-1 text-xs font-bold text-black shadow-md"
-                        >
-                            Semanal
-                        </button>
-
-                        <button
-                            type="button"
-                            className="rounded-md px-4 py-1 text-xs font-semibold text-white/60 transition-colors hover:text-white"
-                        >
-                            Mensal
-                        </button>
-                    </div>
-
-                    <button
-                        type="button"
-                        className="rounded-full p-2 text-white/70 transition-colors hover:bg-black/20"
-                    >
-                        <Settings className="h-5 w-5" />
-                    </button>
-                </div>
+                
 
                 {/* Mês */}
                 <div className="my-6 flex items-center justify-between">
@@ -278,28 +254,7 @@ export const GlassCalendar = React.forwardRef<
                 </div>
 
                 {/* Divider */}
-                <div className="mt-6 h-px bg-white/20" />
-
-                {/* Footer */}
-                <div className="mt-4 flex items-center justify-between gap-4">
-                    <button
-                        type="button"
-                        className="flex items-center space-x-2 text-sm font-medium text-white/70 transition-colors hover:text-white"
-                    >
-                        <Edit2 className="h-4 w-4" />
-
-                        <span>Adicionar observação...</span>
-                    </button>
-
-                    <button
-                        type="button"
-                        className="flex items-center space-x-2 rounded-lg bg-black/20 px-3 py-2 text-xs font-bold text-white shadow-md transition-colors hover:bg-black/30"
-                    >
-                        <Plus className="h-4 w-4" />
-
-                        <span>Novo evento</span>
-                    </button>
-                </div>
+                
             </div>
         );
     },

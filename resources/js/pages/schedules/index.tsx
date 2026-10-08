@@ -185,6 +185,8 @@ export default function Create({ clients, barbers, services }: Props) {
 
                 const data = await response.json();
 
+                console.log(data);
+
                 setAvailableTimes(data.times ?? []);
             } catch (error) {
                 console.error(error);
@@ -201,6 +203,8 @@ export default function Create({ clients, barbers, services }: Props) {
         selectedBarber,
         totalDuration,
     ]);
+
+    console.log(availableTimes);
 
     const submit = () => {
         // Posteriormente ligaremos ao backend:
@@ -271,7 +275,12 @@ export default function Create({ clients, barbers, services }: Props) {
                                     </div>
                                 </div>
 
-                                <GlassCalendar></GlassCalendar>
+                                <GlassCalendar
+                                    selectedDate={selectedDate}
+                                    onDateSelect={setSelectedDate}
+                                >
+
+                                </GlassCalendar>
 
                                 {/* Barbeiro */}
                                 <Card className="rounded-2xl border-border/60 shadow-sm">
