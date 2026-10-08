@@ -18,6 +18,7 @@ return [
      */
     'central_domains' => [
         'barbershop.test',
+        'multitenant-barber-app-production.up.railway.app'
         //'localhost',
         //'127.0.0.1',
     ],
