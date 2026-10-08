@@ -280,7 +280,7 @@ export default function Index({ services }: Props) {
                             <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="max-w-xl">
                                     <div className="mb-3 flex items-center gap-2">
-                                        <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10">
+                                        <div className="flex size-8 items-center justify-center rounded-xl">
                                             <Scissors className="size-4 text-primary" />
                                         </div>
 

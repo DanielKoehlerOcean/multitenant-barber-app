@@ -1,7 +1,8 @@
-import { Head } from '@inertiajs/react';
+import { Head, router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
 import {
+    Calendar,
     CalendarDays,
     Check,
     ChevronRight,
@@ -15,15 +16,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useEffect } from 'react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-
+import { format } from 'date-fns';
 import { GlassCalendar } from '@/components/glass-calendar';
+import LoadingComponent from '@/components/ui/loading-scissors';
 
-interface Client {
-    id: number;
-    name: string;
-}
 
 interface Barber {
     id: number;
@@ -39,12 +35,11 @@ interface Service {
 }
 
 interface Props {
-    clients: Client[];
     barbers: Barber[];
     services: Service[];
 }
 
-export default function Create({ clients, barbers, services }: Props) {
+export default function Create({ barbers, services }: Props) {
     const [selectedDate, setSelectedDate] = useState<Date | undefined>(
         new Date(),
     );
@@ -52,26 +47,11 @@ export default function Create({ clients, barbers, services }: Props) {
     const [availableTimes, setAvailableTimes] = useState<string[]>([]);
     const [loadingTimes, setLoadingTimes] = useState(false);
 
-    const [selectedClient, setSelectedClient] = useState<number | null>(null);
     const [selectedBarber, setSelectedBarber] = useState<number | null>(null);
 
     const [selectedServices, setSelectedServices] = useState<number[]>([]);
 
     const [selectedTime, setSelectedTime] = useState<string | null>(null);
-
-    const [clientSearch, setClientSearch] = useState('');
-
-    const filteredClients = useMemo(() => {
-        const value = clientSearch.trim().toLowerCase();
-
-        if (!value) {
-            return clients;
-        }
-
-        return clients.filter((client) =>
-            client.name.toLowerCase().includes(value),
-        );
-    }, [clients, clientSearch]);
 
     const selectedServiceItems = useMemo(() => {
         return services?.filter((service) =>
@@ -93,9 +73,6 @@ export default function Create({ clients, barbers, services }: Props) {
         );
     }, [selectedServiceItems]);
 
-    const selectedClientData = clients.find(
-        (client) => client.id === selectedClient,
-    );
 
     const selectedBarberData = barbers.find(
         (barber) => barber.id === selectedBarber,
@@ -207,15 +184,17 @@ export default function Create({ clients, barbers, services }: Props) {
     console.log(availableTimes);
 
     const submit = () => {
-        // Posteriormente ligaremos ao backend:
-        //
-        // post('/schedules', {
-        //     date: selectedDate,
-        //     client_id: selectedClient,
-        //     user_id: selectedBarber,
-        //     services: selectedServices,
-        //     started_at: selectedTime,
-        // });
+        if (!selectedDate || !selectedBarber || !selectedTime) {
+            return;
+        }
+
+        router.post('/schedules', {
+            barber_id: selectedBarber,
+            payment_type: 'local',
+            date: format(selectedDate, 'yyyy-MM-dd'),
+            time: selectedTime,
+            service_ids: selectedServices,
+        });
     };
 
     return (
@@ -231,8 +210,8 @@ export default function Create({ clients, barbers, services }: Props) {
                             <div className="relative z-10 flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
                                 <div className="max-w-xl">
                                     <div className="mb-3 flex items-center gap-2">
-                                        <div className="flex size-8 items-center justify-center rounded-xl bg-primary/10">
-                                            <Scissors className="size-4 text-primary" />
+                                        <div className="flex size-8 items-center justify-center rounded-xl ">
+                                            <Calendar className="size-4 text-primary" />
                                         </div>
 
                                         <span className="text-xs font-medium tracking-[0.16em] text-muted-foreground uppercase">
@@ -245,7 +224,7 @@ export default function Create({ clients, barbers, services }: Props) {
                                     </h1>
 
                                     <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-                                        Escolha a data, horário, cliente,
+                                        Escolha a data, horário,
                                         barbeiro e os serviços que serão
                                         realizados.
                                     </p>
@@ -286,10 +265,7 @@ export default function Create({ clients, barbers, services }: Props) {
                                 <Card className="rounded-2xl border-border/60 shadow-sm">
                                     <CardHeader className="px-5 pt-5 pb-3 sm:px-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
-                                                <Scissors className="size-4 text-primary" />
-                                            </div>
-
+                                            
                                             <div>
                                                 <CardTitle className="text-base">
                                                     Barbeiro
@@ -344,9 +320,7 @@ export default function Create({ clients, barbers, services }: Props) {
                                 <Card className="rounded-2xl border-border/60 shadow-sm">
                                     <CardHeader className="px-5 pt-5 pb-3 sm:px-6">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex size-9 items-center justify-center rounded-xl bg-primary/10">
-                                                <Scissors className="size-4 text-primary" />
-                                            </div>
+                                          
 
                                             <div>
                                                 <CardTitle className="text-base">
@@ -453,7 +427,7 @@ export default function Create({ clients, barbers, services }: Props) {
                                                 </p>
                                             </div>
 
-                                            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl bg-primary/10">
+                                            <div className="flex size-11 shrink-0 items-center justify-center rounded-2xl">
                                                 <CalendarDays className="size-5 text-primary" />
                                             </div>
                                         </div>
@@ -483,8 +457,8 @@ export default function Create({ clients, barbers, services }: Props) {
 
                                    <CardContent className="px-5 pb-5 sm:px-6">
                                         {loadingTimes ? (
-                                            <div className="py-8 text-center text-sm text-muted-foreground">
-                                                Calculando horários disponíveis...
+                                            <div className="py-1 text-center flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground">
+                                               <LoadingComponent></LoadingComponent> <span> Verificando horários disponíveis</span> 
                                             </div>
                                         ) : !selectedBarber ? (
                                             <div className="py-8 text-center text-sm text-muted-foreground">
@@ -533,16 +507,6 @@ export default function Create({ clients, barbers, services }: Props) {
 
                                     <CardContent className="space-y-5 p-5 sm:p-6">
                                         <div className="space-y-3">
-                                            <div className="flex items-center justify-between gap-4">
-                                                <span className="text-sm text-muted-foreground">
-                                                    Cliente
-                                                </span>
-
-                                                <span className="max-w-[55%] truncate text-right text-sm font-medium">
-                                                    {selectedClientData?.name ??
-                                                        'Não selecionado'}
-                                                </span>
-                                            </div>
 
                                             <div className="flex items-center justify-between gap-4">
                                                 <span className="text-sm text-muted-foreground">
@@ -610,6 +574,7 @@ export default function Create({ clients, barbers, services }: Props) {
                                             type="button"
                                             onClick={submit}
                                             size="lg"
+                                            disabled={!selectedDate || !selectedBarber || !selectedTime}
                                             className="h-12 w-full rounded-xl shadow-sm"
                                         >
                                             Confirmar agendamento

@@ -14,9 +14,9 @@ return new class extends Migration
         Schema::create('schedules', function (Blueprint $table) {
             $table->id();
             $table->string('tenant_id');
-            $table->foreignId('payment_types_id')->constrained('payment_types'); 
-            $table->foreignId('client_id')->constrained('clients')->cascadeOnDelete(); // Cliente atrelado
-            $table->foreignId('user_id')->constrained('users')->cascadeOnDelete(); // Barbeiro responsável
+            $table->foreignId('payment_types_id')->constrained('payment_types')->nullable(); 
+            $table->foreignId('client_id')->constrained('users')->cascadeOnDelete(); // Cliente atrelado
+            $table->foreignId('barber_id')->constrained('users')->cascadeOnDelete(); // Barbeiro responsável
             $table->enum('status', ['pendente', 'concluido', 'cancelado'])->default('pendente');
             $table->dateTime('started_at');
             $table->dateTime('end_at');

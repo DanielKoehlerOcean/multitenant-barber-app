@@ -30,17 +30,17 @@ Route::middleware([
     Route::middleware(['auth', 'verified'])->group(function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
 
-     /*
         Route::resource('services', ServiceController::class);
         Route::get('/services/{service}/photo', [ServiceController::class, 'photo'])->name('services.photo');
         
         Route::get('/schedules', [ScheduleController::class, 'index']);
+        Route::post('/schedules', [ScheduleController::class, 'store']);
         Route::get('/schedules/availability', [ScheduleController::class, 'availability'])->name('schedules.availability');
 
         Route::get('/operation', [OperationController::class, 'index'])->name('operation');
         Route::put('/operation/business-hour', [OperationController::class, 'updateBusinessHours'])->name('update.business-hour');
         Route::put('/operation/barber-hour/{user}', [OperationController::class, 'updateBarberHours'])->name('update.barber-hour');
-    */
+
         
     });
 
