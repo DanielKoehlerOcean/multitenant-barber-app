@@ -252,9 +252,6 @@ export const GlassCalendar = React.forwardRef<
                         })}
                     </div>
                 </div>
-
-                {/* Divider */}
-                
             </div>
         );
     },

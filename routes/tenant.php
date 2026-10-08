@@ -30,6 +30,7 @@ Route::middleware([
     Route::middleware(['auth', 'verified'])->group(function () {
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
 
+     /*
         Route::resource('services', ServiceController::class);
         Route::get('/services/{service}/photo', [ServiceController::class, 'photo'])->name('services.photo');
         
@@ -39,7 +40,7 @@ Route::middleware([
         Route::get('/operation', [OperationController::class, 'index'])->name('operation');
         Route::put('/operation/business-hour', [OperationController::class, 'updateBusinessHours'])->name('update.business-hour');
         Route::put('/operation/barber-hour/{user}', [OperationController::class, 'updateBarberHours'])->name('update.barber-hour');
-
+    */
         
     });
 
