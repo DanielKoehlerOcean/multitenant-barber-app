@@ -17,7 +17,7 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     
-    'central_domains' => app()->environment('production')
+    'central_domains' => env('APP_ENV', 'production')
     ? [
         'multitenant-barber-app-production.up.railway.app',
     ]
