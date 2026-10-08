@@ -16,9 +16,13 @@ return [
      *
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
-    'central_domains' => [
+    
+    'central_domains' => app()->environment('production')
+    ? [
+        'multitenant-barber-app-production.up.railway.app',
+    ]
+    : [
         'barbershop.test',
-        'multitenant-barber-app-production.up.railway.app'
         //'localhost',
         //'127.0.0.1',
     ],
