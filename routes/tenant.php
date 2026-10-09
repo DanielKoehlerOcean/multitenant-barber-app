@@ -34,14 +34,14 @@ Route::middleware([
         Route::get('/services/{service}/photo', [ServiceController::class, 'photo'])->name('services.photo');
         
         Route::get('/schedules', [ScheduleController::class, 'index']);
-        Route::post('/schedules', [ScheduleController::class, 'store']);
+        Route::get('/schedules/create', [ScheduleController::class, 'create']);
+        Route::post('/schedules/store', [ScheduleController::class, 'store']);
+        Route::delete('/schedules/destroy/{id}', [ScheduleController::class, 'destroy']);
         Route::get('/schedules/availability', [ScheduleController::class, 'availability'])->name('schedules.availability');
 
         Route::get('/operation', [OperationController::class, 'index'])->name('operation');
         Route::put('/operation/business-hour', [OperationController::class, 'updateBusinessHours'])->name('update.business-hour');
         Route::put('/operation/barber-hour/{user}', [OperationController::class, 'updateBarberHours'])->name('update.barber-hour');
-
-        
     });
 
 });

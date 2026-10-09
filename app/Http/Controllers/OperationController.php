@@ -105,7 +105,6 @@ class OperationController extends Controller
             tenant()->users()->whereKey($user->id)->exists(),
             404
         );
-        
 
         $validated = $request->validate([
             'days' => ['required', 'array'],
@@ -118,7 +117,14 @@ class OperationController extends Controller
             'days.*.breaks.*.end_time' => ['required'],
         ]);
 
+        $businessHour = BusinessHour::query()
+            ->where('tenant_id', tenant('id'))
+            ->where('day_of_week', $validated['day_of_week'])
+            ->first();
         
+        if (!$businessHour || !$businessHour->is_open) {
+            return;
+        }
 
         DB::transaction(function () use ($validated, $user) {
             foreach ($validated['days'] as $day) {

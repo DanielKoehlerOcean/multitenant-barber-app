@@ -11,13 +11,40 @@ use Illuminate\Http\Request;
 use Inertia\Inertia;
 use App\Models\BarberWorkingHour;
 use App\Models\BusinessHour;
+use App\Models\TenantUser;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 
 class ScheduleController extends Controller
 {
+
     public function index(){
+        $user = auth()->user();
+        $role = TenantUser::query()->where('user_id', $user->id)->first()->role;
+
+        switch ($role) {
+            case 'admin':
+                $schedules = Schedule::with('services', 'client', 'barber')->get();
+                break;
+            case 'barber':
+                $schedules = Schedule::query()->with('services', 'client', 'barber')->where('barber_id', $user->id)->get();
+                break;
+            case 'client':
+                $schedules = Schedule::query()->with('services', 'client', 'barber')->where('client_id', $user->id)->get();
+                break;
+            default:
+                $schedules = [];
+        }
+
+        return Inertia::render('schedules/index', [
+            'schedules' => $schedules,
+            'role' => $role
+        ]);
+    }
+
+    public function create(){
 
         $services = Service::all();
         $clients = [['id' => 1, 'name' => 'Daniel']];
@@ -27,7 +54,7 @@ class ScheduleController extends Controller
             ->orderBy('name')
             ->get(['users.id', 'users.name']);
 
-        return Inertia::render('schedules/index', [
+        return Inertia::render('schedules/create', [
             'services' => $services,
             'clients' => $clients,
             'barbers' => $barbers
@@ -46,49 +73,28 @@ class ScheduleController extends Controller
         ]);
 
         $tenantId = tenant('id');
-
-        /*
-        * Cliente pertence ao tenant
-        */
         $client = auth()->user();
 
-        abort_unless(
-            tenant()->users()
+        $clitenVerify = tenant()->users()
                 ->whereKey($client->id)
                 ->wherePivot('role', 'client')
-                ->exists(),
-            403
-        );
+                ->exists();
 
-        /*
-        * Barbeiro pertence ao tenant
-        */
+        $this->validateSchedule((!$clitenVerify), 'Usuário não aturoizado', 'Você não possui permissão para realizar agendamento');
+        
         $barber = tenant()
             ->users()
             ->where('role', 'barber')
             ->whereKey($validated['barber_id'])
             ->firstOrFail();
 
-        /*
-        * Forma de pagamento pertence ao tenant
-        */
-
-        /*
-        * Serviços pertencem ao tenant
-        */
         $services = Service::query()
             ->where('tenant_id', $tenantId)
             ->whereIn('id', $validated['service_ids'])
             ->get();
+        
+        $this->validateSchedule($services->count() !== count(array_unique($validated['service_ids'])), 'Erro No serviço selecionado', 'Um ou mais serviços selecionados são inválidos.');
 
-        if ($services->count() !== count(array_unique($validated['service_ids']))) {
-            abort(422, 'Um ou mais serviços selecionados são inválidos.');
-        }
-
-        /*
-        * Calcula duração e valor diretamente do banco.
-        * Nunca devemos confiar no valor/duração enviados pelo frontend.
-        */
         $totalDuration = $services->sum('duration');
         $totalValue = $services->sum('value');
 
@@ -100,19 +106,8 @@ class ScheduleController extends Controller
 
         $endAt = $startedAt->copy()->addMinutes($totalDuration);
 
-        /*
-        * Dia da semana:
-        * 0 = domingo
-        * 1 = segunda
-        * ...
-        * 6 = sábado
-        */
         $dayOfWeek = $startedAt->dayOfWeek;
 
-        /*
-        * Primeiro procura uma configuração individual
-        * do barbeiro para aquele dia.
-        */
         $barberHour = BarberWorkingHour::query()
             ->with('breaks')
             ->where('tenant_id', $tenantId)
@@ -121,14 +116,9 @@ class ScheduleController extends Controller
             ->first();
 
         if ($barberHour) {
-            /*
-            * Existe configuração individual.
-            * Ela sobrescreve o horário geral.
-            */
-            if (!$barberHour->is_working) {
-                abort(422, 'O barbeiro não trabalha neste dia.');
-            }
-
+            
+            $this->validateSchedule(!$barberHour->is_working, 'Erro no Horário do Barbeiro', 'O barbeiro não trabalha neste dia.');
+            
             $workStart = Carbon::parse(
                 "{$validated['date']} {$barberHour->start_time}"
             );
@@ -139,19 +129,13 @@ class ScheduleController extends Controller
 
             $breaks = $barberHour->breaks;
         } else {
-            /*
-            * Não existe configuração individual.
-            * Usa o horário geral da barbearia.
-            */
             $businessHour = BusinessHour::query()
                 ->with('breaks')
                 ->where('tenant_id', $tenantId)
                 ->where('day_of_week', $dayOfWeek)
                 ->first();
 
-            if (!$businessHour || !$businessHour->is_open) {
-                abort(422, 'A barbearia não funciona neste dia.');
-            }
+            $this->validateSchedule(!$businessHour || !$businessHour->is_open, 'Erro na Data Selecionado', 'A barbearia não funciona este dia.');
 
             $workStart = Carbon::parse(
                 "{$validated['date']} {$businessHour->start_time}"
@@ -164,24 +148,9 @@ class ScheduleController extends Controller
             $breaks = $businessHour->breaks;
         }
 
-        /*
-        * O agendamento inteiro precisa caber dentro
-        * do horário de trabalho.
-        */
-        if (
-            $startedAt->lt($workStart) ||
-            $endAt->gt($workEnd)
-        ) {
-            abort(
-                422,
-                'O horário selecionado não comporta a duração dos serviços.'
-            );
-        }
-
-        /*
-        * Verifica se o horário começa ou termina
-        * dentro de uma pausa.
-        */
+        $this->validateSchedule($startedAt->lt($workStart) ||
+            $endAt->gt($workEnd), 'Erro no Horário Selecionado', 'O horário selecionado não comporta a duração dos serviços.');
+        
         foreach ($breaks as $break) {
             $breakStart = Carbon::parse(
                 "{$validated['date']} {$break->start_time}"
@@ -195,19 +164,10 @@ class ScheduleController extends Controller
                 $startedAt->lt($breakEnd) &&
                 $endAt->gt($breakStart);
 
-            if ($overlapsBreak) {
-                abort(
-                    422,
-                    'O horário selecionado está dentro de um intervalo do barbeiro.'
-                );
-            }
+            $this->validateSchedule($overlapsBreak, 'Erro no Horário Selecionado', 'O horário selecionado está dentro de um intervalo do barbeiro.');
+
         }
 
-        /*
-        * Verifica conflito com outro agendamento.
-        *
-        * Cancelados não bloqueiam horário.
-        */
         $hasConflict = Schedule::query()
             ->where('tenant_id', $tenantId)
             ->where('barber_id', $barber->id)
@@ -216,21 +176,11 @@ class ScheduleController extends Controller
             ->where('end_at', '>', $startedAt)
             ->exists();
 
-        if ($hasConflict) {
-            abort(
-                422,
-                'O barbeiro já possui um agendamento neste horário.'
-            );
-        }
-
-        /*
-        * Criação do agendamento + serviços.
-        */
+        $this->validateSchedule($hasConflict, 'Erro no Horário Selecionado', 'O barbeiro já possui um agendamento neste horário.');
 
         $paymentType = PaymentType::query()->where('type', $validated['payment_type'])->first();
 
-
-        $schedule = DB::transaction(function () use (
+        DB::transaction(function () use (
             $tenantId,
             $client,
             $validated,
@@ -259,8 +209,6 @@ class ScheduleController extends Controller
                     ],
                 ])->toArray()
             );
-
-            return $schedule;
         });
 
         return redirect()
@@ -269,6 +217,32 @@ class ScheduleController extends Controller
                 'success',
                 'Agendamento criado com sucesso.'
             );
+    }
+
+     private function validateSchedule(bool $condition, string $title,  string $description){
+        
+         if ($condition) {
+            throw ValidationException::withMessages([
+                'title' => $title,
+                'description' => $description
+            ]);
+        }
+    }
+
+    public function destroy(int $id){
+        
+        $client = auth()->user();
+    
+        $schedule = Schedule::findOrFail($id);
+
+        if($schedule->client_id === $client->id){
+            $schedule->delete();
+            
+            return redirect()->back()->with('Agendamento deletado com sucesso');
+        }
+
+        abort(403);
+
     }
 
     public function availability(Request $request)
@@ -399,4 +373,6 @@ class ScheduleController extends Controller
             'times' => $times,
         ]);
     }
+
+   
 }

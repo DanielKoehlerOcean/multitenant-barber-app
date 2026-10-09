@@ -293,16 +293,38 @@ export default function HoursSettings({business_hours, barbers}: any) {
     const selectedBarberSchedules =
         barberSchedules[Number(selectedBarberId)] ?? [];
 
+    
     const updateBusinessDay = (
         dayOfWeek: number,
         changes: Partial<DaySchedule>,
     ) => {
         setBusinessHours((current) =>
             current.map((day) =>
-                day.day_of_week === dayOfWeek ? { ...day, ...changes } : day,
+                day.day_of_week === dayOfWeek
+                    ? { ...day, ...changes }
+                    : day,
             ),
         );
+
+        if (changes.is_open === false) {
+            setBarberSchedules((current) => {
+                const updated = { ...current };
+
+                Object.keys(updated).forEach((barberId) => {
+                    updated[Number(barberId)] = updated[
+                        Number(barberId)
+                    ].map((day) =>
+                        day.day_of_week === dayOfWeek
+                            ? { ...day, is_working: false }
+                            : day,
+                    );
+                });
+
+                return updated;
+            });
+        }
     };
+
 
     const updateBarberDay = (
         dayOfWeek: number,
@@ -785,17 +807,22 @@ export default function HoursSettings({business_hours, barbers}: any) {
                                             </p>
                                         </div>
 
+                                                                                
                                         <Switch
                                             checked={day.is_working}
+                                            disabled={
+                                                !businessHours.find(
+                                                    (businessDay) =>
+                                                        businessDay.day_of_week === day.day_of_week,
+                                                )?.is_open
+                                            }
                                             onCheckedChange={(checked) =>
-                                                updateBarberDay(
-                                                    day.day_of_week,
-                                                    {
-                                                        is_working: checked,
-                                                    },
-                                                )
+                                                updateBarberDay(day.day_of_week, {
+                                                    is_working: checked,
+                                                })
                                             }
                                         />
+
                                     </div>
 
                                     {day.is_working ? (
@@ -902,7 +929,7 @@ export default function HoursSettings({business_hours, barbers}: any) {
 
                                                                 <Button
                                                                     type="button"
-                                                                    variant="ghost"
+                                                                    variant={'outline'}
                                                                     size="icon"
                                                                     onClick={() =>
                                                                         removeBarberBreak(
@@ -910,7 +937,7 @@ export default function HoursSettings({business_hours, barbers}: any) {
                                                                             breakTime.id,
                                                                         )
                                                                     }
-                                                                    className="shrink-0 rounded-lg text-muted-foreground hover:text-destructive"
+                                                                    className="hover:bg-foreground/20 shrink-0 rounded-lg text-destructive hover:text-red-900"
                                                                 >
                                                                     <Trash2 className="h-4 w-4" />
                                                                 </Button>

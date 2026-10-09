@@ -5,6 +5,8 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Stancl\Tenancy\Database\Concerns\BelongsToTenant;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
+
 class Schedule extends Model
 {
     use BelongsToTenant;
@@ -17,6 +19,10 @@ class Schedule extends Model
     protected $casts = [
         'started_at' => 'datetime',
         'end_at' => 'datetime',
+    ];
+
+    protected $appends = [
+        'total_value'
     ];
 
     public function client()
@@ -39,5 +45,14 @@ class Schedule extends Model
         return $this->belongsToMany(Service::class)
                     ->withPivot('value', 'duration')
                     ->withTimestamps();
+    }
+
+        protected function totalValue(): Attribute
+    {
+        return Attribute::make(
+            get: fn () => $this->services->sum(
+                fn ($item) => ($item->value ?? 0) 
+            )
+        );
     }
 }
