@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Tenant;
+use App\Models\TenantUser;
 use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 
@@ -21,22 +22,28 @@ class TenantController extends Controller
 
     public function store(Request $request){
         
+        $user = auth()->user();
+
         $validated = $request->validate([
             'name' => ['required', 'string'],
             'email' => ['required', 'string'],
-            'document' => ['nullable', 'string']
+            'document' => ['nullable', 'string'],
+            'slug' => ['required', 'string']
         ]);
 
-        DB::transaction(function() use ($validated){
-            $tenant = Tenant::create([
-                'name' =>$validated['name'],
-                'email' => $validated['email'],
-                'document' > $validated['document']
-            ]);
+        DB::transaction(function() use ($validated, $user){
+            $tenant = Tenant::create($validated);
 
             $tenant->domains()->create([
-                'domain' => $tenant->name . config('app.url')
+                'domain' => $tenant->slug . '.' . config('app.url')
             ]);
+
+            TenantUser::create([
+                'user_id' => $user->id,
+                'tenant_id', $tenant->id,
+                'role' => 'admin'
+            ]);
+
         });
     }
 

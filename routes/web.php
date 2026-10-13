@@ -10,8 +10,11 @@ foreach (config('tenancy.central_domains') as $domain) {
 
         Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('/dashboard', [DashboardController::class, 'index'])->name('central.dashboard');
+            
             Route::get('/tenants', [TenantController::class, 'index'])->name('central.tenants');
             Route::get('/create-tenant', [TenantController::class, 'create'])->name('central.create-tenant');
+            Route::post('/create-tenant', [TenantController::class, 'store'])->name('central.create-tenant.store');
+
         });
     });
 }

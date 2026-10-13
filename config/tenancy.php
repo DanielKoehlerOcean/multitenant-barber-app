@@ -17,11 +17,7 @@ return [
      * Only relevant if you're using the domain or subdomain identification middleware.
      */
     
-    'central_domains' => env('APP_ENV', 'production')
-    ? [
-        'multitenant-barber-app-production.up.railway.app',
-    ]
-    : [
+    'central_domains' => [
         'barbershop.test',
         //'localhost',
         //'127.0.0.1',

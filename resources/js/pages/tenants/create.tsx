@@ -14,20 +14,55 @@ import { Button } from '@/components/ui/button';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Building2, Check, Scissors, Store, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { toast } from '@/components/ui/use-toast';
+import { Toaster } from '@/components/ui/toaster';
 
 export default function CreateTenant() {
-    const { data, setData, post, processing, errors } = useForm({
+
+    const { data, setData, post, processing, errors } = useForm<{name: string; email: string; document: string; slug: string; plan: string;}>({
         name: '',
         email: '',
         document: '',
-        subdomain: '',
+        slug: '',
         plan: 'starter',
     });
 
+    function validateFields() {
+        const fields = ['name', 'email', 'slug'];
+
+        const fieldsName: Record<string, string> = {
+            name: 'Nome',
+            email: 'Email',
+            slug: 'Link',
+        }
+
+        for (const field of fields) {
+            if (!data[field]) {
+                toast({
+                    title: 'Campo obrigatório',
+                    description: fieldsName[field],
+                    variant: 'destructive',
+                });
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     const submit = () => {
-        
-        // Ajuste a rota para a que você definiu no seu routes/web.php
-        post('/barbearias'); 
+        if(validateFields()){
+            post('/create-tenant', {
+                onSuccess: () => {
+                    toast({
+                        title: 'Barbearia cadastrada',
+                        description: 'Barbearia  cadastrada com sucesso',
+                        variant: 'success'
+                    });
+                }
+            });
+        } 
     };
 
     // Gera o subdomínio automaticamente baseado no nome (opcional, para UX)
@@ -35,8 +70,8 @@ export default function CreateTenant() {
         const newName = e.target.value;
         setData('name', newName);
         
-        if (!data.subdomain || data.subdomain === formatSubdomain(data.name)) {
-            setData('subdomain', formatSubdomain(newName));
+        if (!data.slug || data.slug === formatSubdomain(data.name)) {
+            setData('slug', formatSubdomain(newName));
         }
     };
 
@@ -47,7 +82,7 @@ export default function CreateTenant() {
     return (
         <>
             <Head title="Configure sua Barbearia" />
-            
+            <Toaster></Toaster>
             <div className=" grid grid-cols-1 gap-2 lg:grid-cols-5 items-center justify-center bg-muted/40 p-4 py-8">
                 <div className="col-span-2 px-5">
                        
@@ -156,20 +191,20 @@ export default function CreateTenant() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="subdomain">Link do seu sistema</Label>
+                                        <Label htmlFor="slug">Link do seu sistema</Label>
                                         <div className="flex rounded-md shadow-sm">
                                             <Input
-                                                id="subdomain"
+                                                id="slug"
                                                 className="rounded-r-none border-r-0 focus-visible:ring-0 focus-visible:ring-offset-0"
                                                 placeholder="suabarbearia"
-                                                value={data.subdomain}
-                                                onChange={(e) => setData('subdomain', e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
+                                                value={data.slug}
+                                                onChange={(e) => setData('slug', e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''))}
                                             />
                                             <div className="inline-flex items-center rounded-r-md border border-l-0 border-input bg-muted px-3 text-sm text-muted-foreground">
                                                 .barbershop.test
                                             </div>
                                         </div>
-                                        {errors.subdomain && <p className="text-sm text-red-500">{errors.subdomain}</p>}
+                                        {errors.slug && <p className="text-sm text-red-500">{errors.slug}</p>}
                                     </div>
                                 </div>
                             </div>
