@@ -23,7 +23,7 @@ import { Input } from '@/components/ui/input';
 import CancelSchedule from '@/components/schedules/cancel-schedule';
 import { Toaster } from '@/components/ui/toaster';
 
-type UserRole = 'client' | 'barber' | 'admin';
+type UserRole = 'client' | 'barber' | 'owner';
 
 type ScheduleStatus = 'pendente' | 'concluido' | 'cancelado';
 
@@ -95,7 +95,7 @@ const roleConfig = {
         emptyDescription:
             'Os atendimentos marcados aparecerão aqui.',
     },
-    admin: {
+    owner: {
         title: 'Agendamentos',
         description:
             'Acompanhe os atendimentos e a movimentação da barbearia.',
@@ -292,7 +292,7 @@ export default function Index({ schedules, role }: Props) {
                             icon={<Scissors className="size-4" />}
                         />
 
-                        {role === 'admin' ? (
+                        {role === 'owner' ? (
                             <MetricCard
                                 title="Faturamento realizado"
                                 value={formatCurrency(totalValue)}
@@ -543,8 +543,7 @@ export default function Index({ schedules, role }: Props) {
                                                 </div>
                                                 {
                                                     role === 'client' &&
-                                                    <div className='flex flex-row justify-end gap-4 '>
-                                                        <Button size={'sm'} variant={'outline'}>Editar</Button>
+                                                    <div className='flex flex-row justify-end mt-3 gap-4 '>
                                                         <CancelSchedule id={schedule.id}></CancelSchedule>
                                                     </div>
                                                 }

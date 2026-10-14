@@ -16,10 +16,15 @@ import { Building2, Check, Scissors, Store, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import { toast } from '@/components/ui/use-toast';
 import { Toaster } from '@/components/ui/toaster';
+import { email } from '@/routes/password';
 
-export default function CreateTenant() {
+export default function CreateTenant({tenants}: {
+    tenants: Record<any, any>[];
+}) {
 
-    const { data, setData, post, processing, errors } = useForm<{name: string; email: string; document: string; slug: string; plan: string;}>({
+    console.log(tenants);
+
+    const { data, setData, post, processing, errors, setError, clearErrors } = useForm<{name: string; email: string; document: string; slug: string; plan: string;}>({
         name: '',
         email: '',
         document: '',
@@ -27,8 +32,34 @@ export default function CreateTenant() {
         plan: 'starter',
     });
 
+    function verifyRepeated(){
+        if(tenants.length === 0){
+            return true
+        }
+        
+        const hasEmail = tenants.some((tenant) => tenant.email === data.email);
+        const hasSlug = tenants.some((tenant) => tenant.slug === data.slug);
+        const hasName = tenants.some((tenant) => tenant.name === data.name);
+
+        if (hasEmail || hasSlug || hasName) {
+            
+            toast({
+                title: 'Campos repetidos',
+                description: 'Dados já cadastrados',
+                variant: 'destructive'
+            });
+
+            return false;
+        }
+        
+        return true
+    }
+
     function validateFields() {
         const fields = ['name', 'email', 'slug'];
+        let isValid = true;
+
+        clearErrors();
 
         const fieldsName: Record<string, string> = {
             name: 'Nome',
@@ -38,21 +69,18 @@ export default function CreateTenant() {
 
         for (const field of fields) {
             if (!data[field]) {
-                toast({
-                    title: 'Campo obrigatório',
-                    description: fieldsName[field],
-                    variant: 'destructive',
-                });
-
-                return false;
+                setError(field, `O campo ${fieldsName[field]} é obrigatório`);
+                
+                isValid = false;
             }
         }
 
-        return true;
+        return isValid;
     }
 
     const submit = () => {
-        if(validateFields()){
+        if(validateFields() && verifyRepeated()){
+            console.log('a');
             post('/create-tenant', {
                 onSuccess: () => {
                     toast({
@@ -94,7 +122,7 @@ export default function CreateTenant() {
                 <Card className="col-span-3 w-full  border-sidebar-border/70 shadow-lg mt-6">
                   
 
-                    <form onSubmit={submit}>
+                    
                         <CardContent className="space-y-8 py-4">
                             
                             {/* Seleção de Planos */}
@@ -211,7 +239,7 @@ export default function CreateTenant() {
                         </CardContent>
                         <Separator></Separator>
                         <CardFooter className="flex justify-end pt-6">
-                            <Button type="submit" size="lg" disabled={processing} className="w-full md:w-auto">
+                            <Button onClick={submit} size="lg" disabled={processing} className="w-full md:w-auto">
                                 {processing ? (
                                     <>
                                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -222,7 +250,7 @@ export default function CreateTenant() {
                                 )}
                             </Button>
                         </CardFooter>
-                    </form>
+
                 </Card>
             </div>
         </>

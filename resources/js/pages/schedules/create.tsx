@@ -43,7 +43,7 @@ interface Props {
 }
 
 export default function Create({ barbers, services }: Props) {
-    const [selectedDate, setSelectedDate] = useState<Date | undefined>(
+    const [selectedDate, setSelectedDate] = useState<Date>(
         new Date(),
     );
 
@@ -80,6 +80,25 @@ export default function Create({ barbers, services }: Props) {
     const selectedBarberData = barbers.find(
         (barber) => barber.id === selectedBarber,
     );
+
+    const isPastTime = (time: string, date: Date) => {
+        const [hours, minutes] = time.split(':').map(Number);
+
+        const selectedDateTime = new Date(date);
+        selectedDateTime.setHours(hours, minutes, 0, 0);
+
+        return selectedDateTime < new Date();
+    };
+
+    const isToday = (date: Date) => {
+        const today = new Date();
+
+        return (
+            date.getFullYear() === today.getFullYear() &&
+            date.getMonth() === today.getMonth() &&
+            date.getDate() === today.getDate()
+        );
+    };
 
     const formatPrice = (value: number) => {
         return value.toLocaleString('pt-BR', {
@@ -475,7 +494,7 @@ export default function Create({ barbers, services }: Props) {
 
                                    <CardContent className="px-5 pb-5 sm:px-6">
                                         {loadingTimes ? (
-                                            <div className="py-1 text-center flex flex-row gap-2 items-center justify-center text-sm text-muted-foreground">
+                                            <div className="py-1 text-center flex flex-row gap-4 items-center justify-center text-sm text-muted-foreground">
                                                <LoadingComponent></LoadingComponent> <span> Verificando horários disponíveis</span> 
                                             </div>
                                         ) : !selectedBarber ? (
@@ -494,13 +513,16 @@ export default function Create({ barbers, services }: Props) {
                                             <div className="grid grid-cols-3 gap-2 sm:grid-cols-4">
                                                 {availableTimes.map((time) => {
                                                     const selected = selectedTime === time;
+                                                    const disabled = isToday(selectedDate) && isPastTime(time, selectedDate);
 
                                                     return (
                                                         <button
                                                             key={time}
                                                             type="button"
+                                                            disabled={disabled}
                                                             onClick={() => setSelectedTime(time)}
                                                             className={`h-10 rounded-xl border text-sm font-medium transition-all ${
+                                                                disabled ? 'text-primary/30 border-primary/10' :
                                                                 selected
                                                                     ? 'border-primary bg-primary text-primary-foreground shadow-sm'
                                                                     : 'border-border/60 bg-card hover:border-primary/40 hover:bg-primary/5'

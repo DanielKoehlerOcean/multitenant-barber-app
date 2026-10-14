@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, FolderGit2, LayoutGrid, Scissors } from 'lucide-react';
+import { BookOpen, Calendar, CalendarDays, Clock, Clock11Icon, FolderGit2, LayoutGrid, Scissors, ScissorsLineDashed, ScissorsSquare, ScissorsSquareDashedBottom } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -16,6 +16,9 @@ import {
 import { dashboard } from '@/routes';
 import { tenants } from '@/routes/central';
 import type { NavItem } from '@/types';
+import {index as schedules } from '@/routes/schedules';
+import {index as services} from '@/routes/services';
+import {index as operation} from '@/routes/operation';
 
 const mainNavItems: NavItem[] = [
     {
@@ -36,8 +39,24 @@ const mainNavItemsTenant: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
+    {
+        title: 'Agendamentos',
+        href: schedules(),
+        icon: CalendarDays,
+    },
+    {
+        title: 'Serviços',
+        href: services(),
+        icon: ScissorsSquare,
+    },
+    {
+        title: 'Horários',
+        href: operation(),
+        icon: Clock
+    }
     
 ];
+
 
 const footerNavItems: NavItem[] = [
     {
@@ -56,6 +75,25 @@ export function AppSidebar() {
 
     const { auth, tenant } = usePage().props;
 
+    console.log(auth.centralRole);
+
+    const mainNavItemsTenantFilter = mainNavItemsTenant.filter(item => {
+        if(auth.role === 'client' || auth.role === 'barber'){
+            const itens = ['Serviços', 'Horários'];
+            return !itens.includes(item.title);
+        }
+
+        return true;
+    });
+
+    const mainNavItemsFilter = mainNavItems.filter(item => {
+        if(auth.centralRole === 'tenant'){
+            return item.title === 'Barbearias';
+        }
+
+        return true;
+    });
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -71,7 +109,7 @@ export function AppSidebar() {
             </SidebarHeader>
 
             <SidebarContent>
-                <NavMain items={tenant ? mainNavItemsTenant : mainNavItems} />
+                <NavMain items={tenant ? mainNavItemsTenantFilter : mainNavItemsFilter} />
             </SidebarContent>
 
             <SidebarFooter>
@@ -81,3 +119,5 @@ export function AppSidebar() {
         </Sidebar>
     );
 }
+
+

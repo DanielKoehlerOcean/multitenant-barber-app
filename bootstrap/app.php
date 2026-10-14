@@ -9,12 +9,17 @@ use Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets;
 use Illuminate\Http\Request;
 use App\Http\Middleware\EnsureBusinessHours;
 use App\Http\Middleware\EnsurePaymentTypes;
+use App\Http\Middleware\ResolveFortifyGuard;
+use App\Http\Middleware\TenantsRole;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            require base_path('routes/tenant.php');
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
@@ -24,7 +29,12 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
             EnsureBusinessHours::class,
-            EnsurePaymentTypes::class
+            EnsurePaymentTypes::class,
+            ResolveFortifyGuard::class
+        ]);
+
+        $middleware->alias([
+            'role' => TenantsRole::class
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

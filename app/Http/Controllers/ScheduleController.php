@@ -25,7 +25,7 @@ class ScheduleController extends Controller
         $role = TenantUser::query()->where('user_id', $user->id)->first()->role;
 
         switch ($role) {
-            case 'admin':
+            case 'owner':
                 $schedules = Schedule::with('services', 'client', 'barber')->get();
                 break;
             case 'barber':
@@ -47,16 +47,15 @@ class ScheduleController extends Controller
     public function create(){
 
         $services = Service::all();
-        $clients = [['id' => 1, 'name' => 'Daniel']];
         $barbers = tenant()
             ->users()
-            ->where('role', 'barber')
+            ->whereIn('tenant_users.role', ['barber', 'owner'])
             ->orderBy('name')
             ->get(['users.id', 'users.name']);
 
+
         return Inertia::render('schedules/create', [
             'services' => $services,
-            'clients' => $clients,
             'barbers' => $barbers
         ]);
     }
@@ -84,7 +83,7 @@ class ScheduleController extends Controller
         
         $barber = tenant()
             ->users()
-            ->where('role', 'barber')
+            ->whereIn('tenant_users.role', ['barber', 'owner'])
             ->whereKey($validated['barber_id'])
             ->firstOrFail();
 
@@ -97,6 +96,13 @@ class ScheduleController extends Controller
 
         $totalDuration = $services->sum('duration');
         $totalValue = $services->sum('value');
+
+        $scheduledAt = Carbon::createFromFormat(
+            'Y-m-d H:i',
+            $validated['date'].' '.$validated['time']
+        );
+
+        $this->validateSchedule($scheduledAt->isPast(), 'Erro no Agendamento', 'Não é possível agendar em um horário passado.');
 
         $startedAt = Carbon::createFromFormat(
             'Y-m-d H:i',
@@ -257,7 +263,7 @@ class ScheduleController extends Controller
 
         $barber = tenant()
             ->users()
-            ->where('role', 'barber')
+            ->whereIn('tenant_users.role', ['owner', 'barber'])
             ->whereKey($validated['barber_id'])
             ->firstOrFail();
 

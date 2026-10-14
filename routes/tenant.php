@@ -2,10 +2,12 @@
 
 declare(strict_types=1);
 
+use App\Http\Controllers\BarberController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ServiceController;
 use App\Http\Controllers\OperationController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Middleware\EnsureTenantMembership;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 use Stancl\Tenancy\Middleware\PreventAccessFromCentralDomains;
 
@@ -25,23 +27,30 @@ Route::middleware([
     'web',
     InitializeTenancyByDomain::class,
     PreventAccessFromCentralDomains::class,
+    EnsureTenantMembership::class,
 ])->group(function () {
 
-    Route::middleware(['auth', 'verified'])->group(function () {
+    Route::middleware(['auth:web', 'verified'])->group(function () {
+
         Route::inertia('dashboard', 'dashboard')->name('dashboard');
+        Route::get('/schedules', [ScheduleController::class, 'index'])->name('schedules.index');
 
-        Route::resource('services', ServiceController::class);
-        Route::get('/services/{service}/photo', [ServiceController::class, 'photo'])->name('services.photo');
-        
-        Route::get('/schedules', [ScheduleController::class, 'index']);
-        Route::get('/schedules/create', [ScheduleController::class, 'create']);
-        Route::post('/schedules/store', [ScheduleController::class, 'store']);
-        Route::delete('/schedules/destroy/{id}', [ScheduleController::class, 'destroy']);
-        Route::get('/schedules/availability', [ScheduleController::class, 'availability'])->name('schedules.availability');
+        Route::middleware(['role:owner'])->group(function(){
+            Route::get('/operation', [OperationController::class, 'index'])->name('operation.index');
+            Route::put('/operation/business-hour', [OperationController::class, 'updateBusinessHours'])->name('update.business-hour');
+            Route::put('/operation/barber-hour/{user}', [OperationController::class, 'updateBarberHours'])->name('update.barber-hour');
 
-        Route::get('/operation', [OperationController::class, 'index'])->name('operation');
-        Route::put('/operation/business-hour', [OperationController::class, 'updateBusinessHours'])->name('update.business-hour');
-        Route::put('/operation/barber-hour/{user}', [OperationController::class, 'updateBarberHours'])->name('update.barber-hour');
+            Route::resource('barbers', BarberController::class);
+
+            Route::resource('services', ServiceController::class);
+            Route::get('/services/{service}/photo', [ServiceController::class, 'photo'])->name('services.photo');
+        });
+
+        Route::middleware(['role:client'])->group(function(){
+            Route::get('/schedules/create', [ScheduleController::class, 'create']);
+            Route::post('/schedules/store', [ScheduleController::class, 'store']);
+            Route::delete('/schedules/destroy/{id}', [ScheduleController::class, 'destroy']);
+            Route::get('/schedules/availability', [ScheduleController::class, 'availability'])->name('schedules.availability');
+        });
     });
-
 });

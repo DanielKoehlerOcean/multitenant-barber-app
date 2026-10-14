@@ -21,8 +21,15 @@ import {
     DollarSign, 
     Scissors, 
     Users, 
-    TrendingUp 
+    TrendingUp, 
+    LayoutGrid,
+    CalendarDays,
+    ScissorsSquare,
+    Clock
 } from 'lucide-react';
+import FooterMenu from '@/components/footer-menu';
+
+
 
 // Tipagem simulando as props vindas do Controller Laravel
 interface DashboardProps {
@@ -66,10 +73,34 @@ export default function Dashboard({ stats, recentTenants }: DashboardProps) {
         }
     };
 
+    const mainNavItemsTenant: NavItem[] = [
+        {
+            title: 'Dashboard',
+            href: '/dashboard',
+            icon: LayoutGrid,
+        },
+        {
+            title: 'Agendamentos',
+            href: '/schedules',
+            icon: CalendarDays,
+        },
+        {
+            title: 'Serviços',
+            href: '#',
+            icon: ScissorsSquare,
+        },
+        {
+            title: 'Horários',
+            href: '#',
+            icon: Clock
+        }
+        
+    ];
+
     return (
         <>
             <Head title="Dashboard Central" />
-            
+            <FooterMenu items={mainNavItemsTenant}></FooterMenu>
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-8 pt-6">
                 <div className="flex items-center justify-between space-y-2">
                     <h2 className="text-3xl font-bold tracking-tight">Visão Geral da Plataforma</h2>

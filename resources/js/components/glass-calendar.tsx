@@ -64,6 +64,16 @@ export const GlassCalendar = React.forwardRef<
     ) => {
         const initialDate = propSelectedDate ?? new Date();
 
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const isPastDate = (date: Date) => {
+            const calendarDate = new Date(date);
+            calendarDate.setHours(0, 0, 0, 0);
+
+            return calendarDate < today;
+        };
+
         const [currentMonth, setCurrentMonth] =
             React.useState<Date>(initialDate);
 
@@ -207,6 +217,8 @@ export const GlassCalendar = React.forwardRef<
                     {/* Dias */}
                     <div className="grid grid-cols-7 gap-y-3">
                         {monthDays.map((day) => {
+                            const disabled = isPastDate(day.date);
+
                             const isCurrentMonth =
                                 day.date.getMonth() ===
                                     currentMonth.getMonth() &&
@@ -228,9 +240,10 @@ export const GlassCalendar = React.forwardRef<
                                                 day.date,
                                             )
                                         }
+                                        disabled={disabled}
                                         className={cn(
                                             'relative flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold transition-all duration-200',
-                                            day.isSelected
+                                            disabled ? 'text-white/25' : day.isSelected
                                                 ? 'bg-primary text-white shadow-md'
                                                 : isCurrentMonth
                                                   ? 'text-white hover:bg-white/20'

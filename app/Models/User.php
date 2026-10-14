@@ -61,7 +61,7 @@ class User extends Authenticatable implements PasskeyUser
     public function tenants()
     {
         // Uma forma de listar todas as barbearias em que o barbeiro ou dono atua
-        return $this->belongsToMany(Tenant::class)
+        return $this->belongsToMany(Tenant::class, 'tenant_users')
                     ->withPivot('role')
                     ->withTimestamps();
     }

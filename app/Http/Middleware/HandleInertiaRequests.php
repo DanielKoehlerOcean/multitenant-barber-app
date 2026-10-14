@@ -35,11 +35,19 @@ class HandleInertiaRequests extends Middleware
      */
     public function share(Request $request): array
     {
+
+        $role = $request->user()?->tenants()
+            ->first()
+            ?->pivot
+            ?->role;  
+
         return [
             ...parent::share($request),
             'name' => config('app.name'),
             'auth' => [
                 'user' => $request->user(),
+                'role' => $role,
+                'centralRole' => $request->user()?->role
             ],
             'tenant' => tenant() ? [
                 'id' => tenant('id'),
